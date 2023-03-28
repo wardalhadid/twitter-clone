@@ -32,6 +32,7 @@ const CreatePostWizard = () => {
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
 const PostView = (props: PostWithUser) => {
   const { post, author } = props;
+  
   return (
     <div
       key={post.id}
@@ -45,7 +46,7 @@ const PostView = (props: PostWithUser) => {
         className="h-16 w-16 rounded-full"
       />
       <div className="flex flex-col">
-        <div className="flex text-slate-300 gap-2">
+        <div className="flex gap-2 text-slate-300">
           <span> {`@${author.username}`} </span>
           <span className=""> {`. ${dayjs(post.createdAt).fromNow()}`} </span>
         </div>
@@ -57,23 +58,24 @@ const PostView = (props: PostWithUser) => {
 
 const Feed = () => {
   const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
-  if (!postsLoading) return <LoadingPage />
-  if (!data) return <div>Something went wrong</div>
+  if (postsLoading) return <LoadingPage />;
+  if (!data) return <div>Something went wrong</div>;
 
   return (
     <div className="flex flex-col">
-      {data.map((fullPost) => (
+      {[...data]?.map((fullPost) => (
         <PostView {...fullPost} key={fullPost.post.id} />
       ))}
     </div>
-    
-}
+  );
+};
 
 const Home: NextPage = () => {
-  const {user, isLoaded: userLoaded} = useUser();
- api.posts.getAll.useQuery();
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
+  api.posts.getAll.useQuery();
 
   if (!userLoaded) return <div />;
+
   return (
     <>
       <Head>
@@ -83,14 +85,14 @@ const Home: NextPage = () => {
       </Head>
       <main className="flex h-screen justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
-          {!user.isSignedIn && <SignInButton />}
-          {user.isSignedIn && (
+          {!isSignedIn && <SignInButton />}
+          {isSignedIn && (
             <div>
               <div className="flex w-full gap-3 border-b border-slate-400 p-4">
                 <CreatePostWizard />
                 <SignOutButton />
               </div>
-              
+              <Feed />
             </div>
           )}
         </div>
